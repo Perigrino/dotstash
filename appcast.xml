@@ -1,0 +1,37 @@
+<?xml version="1.0" standalone="no"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+    <channel>
+        <title>Dotstash</title>
+        <link>https://github.com/YOUR_USERNAME/dotstash</link>
+        <description>Most recent changes with links to updates.</description>
+        <language>en</language>
+        <item>
+            <title>Version 2.0.0</title>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>2.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>What's New in Dotstash 2.0.0</h3>
+                <ul>
+                    <li>🚀 Initial release of the SwiftUI app</li>
+                    <li>📊 Dashboard with dotfile cards and health status</li>
+                    <li>🔍 Diff viewer with unified and side-by-side views</li>
+                    <li>🎨 Syntax highlighting for common config files</li>
+                    <li>📁 Drag-and-drop support</li>
+                    <li>🔄 Live file watching with auto-refresh</li>
+                    <li>📤 Export/import for transferring between machines</li>
+                    <li>🛡️ Safety features: drift detection and diff-and-refuse</li>
+                    <li>🌐 Menu bar integration with badge count</li>
+                </ul>
+            ]]></description>
+            <pubDate>Mon, 22 Aug 2026 00:00:00 +0000</pubDate>
+            <sparkle:releaseNotesLink>https://raw.githubusercontent.com/YOUR_USERNAME/dotstash/main/release-notes.html</sparkle:releaseNotesLink>
+            <enclosure
+                url="https://github.com/YOUR_USERNAME/dotstash/releases/download/v2.0.0/Dotstash-2.0.0.dmg"
+                type="application/octet-stream"
+                sparkle:edSignature="SIGNATURE_HERE"
+                length="1887436"
+            />
+        </item>
+    </channel>
+</rss>

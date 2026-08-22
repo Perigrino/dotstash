@@ -1,0 +1,92 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Get version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Releasing version: $VERSION"
+      
+      - name: Download DMG artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Dotstash-dmg
+          path: build/
+      
+      - name: Generate checksum
+        run: |
+          cd build
+          shasum -a 256 *.dmg > checksums.txt
+          cat checksums.txt
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Dotstash v${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 What's New in v${{ steps.version.outputs.version }}
+            
+            ### ✨ Features
+            - 📊 Native SwiftUI dashboard with dotfile cards
+            - 🔍 Diff viewer with unified and side-by-side views
+            - 🎨 Syntax highlighting for config files
+            - 📁 Drag-and-drop support
+            - 🔄 Live file watching with auto-refresh
+            - 📤 Export/import for transferring between machines
+            - 🛡️ Safety features: drift detection and diff-and-refuse
+            - 🌐 Menu bar integration with badge count
+            - ⚙️ Auto-update support via Sparkle
+            
+            ### 🛡️ Safety Improvements
+            - **Drift Detection**: Prevents overwriting modified files
+            - **Diff-and-Refuse**: Shows options when conflicts are detected
+            - **Namespaced Paths**: Avoids basename collisions
+            - **Content Hashing**: SHA-256 tracks file state
+            
+            ### 📦 Installation
+            1. Download `Dotstash-${{ steps.version.outputs.version }}.dmg` below
+            2. Open the DMG
+            3. Drag Dotstash to Applications
+            4. Launch from Applications
+            
+            > ⚠️ First launch: Right-click → Open (to bypass Gatekeeper)
+            
+            ### 📋 Checksums
+            ```
+            $(cat build/checksums.txt)
+            ```
+            
+            ### 🙏 Thanks
+            Thanks to everyone who contributed feedback and bug reports!
+          files: |
+            build/*.dmg
+            build/checksums.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Update appcast.xml (optional)
+        run: |
+          echo "ℹ️  To enable auto-updates, update appcast.xml with the new release URL"
+          echo "   and sign it with your Sparkle private key"
+          echo ""
+          echo "   Example:"
+          echo "   sign_update build/Dotstash-${{ steps.version.outputs.version }}.dmg"

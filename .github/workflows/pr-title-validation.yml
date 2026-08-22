@@ -1,0 +1,207 @@
+name: PR Title Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Allowed types
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+            security
+            deps
+            release
+          
+          # Require scope (optional)
+          requireScope: false
+          
+          # Allowed scopes
+          scopes: |
+            cli
+            app
+            diff
+            link
+            stash
+            export
+            import
+            ui
+            ux
+            api
+            core
+            config
+            docs
+            ci
+            deps
+          
+          # Disallow certain types
+          disallowScopes: |
+            wip
+            tmp
+            temp
+          
+          # Validate subject
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            doesn't match the configured pattern. The subject should not start with a capital letter.
+          
+          # Validate type
+          typePattern: ^[a-z]+$
+          typePatternError: |
+            The type "{type}" found in the pull request title "{title}"
+            should be lowercase.
+          
+          # Ignore titles matching these patterns
+          ignoreLabels: |
+            bot
+            ignore-semantic-pull-request
+          
+          # Custom error messages
+          errorOnEmpty: true
+
+      - name: Add type label
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const title = pr.title.toLowerCase();
+            
+            // Extract type from title
+            const match = title.match(/^(\w+)[\(:]/);
+            if (match) {
+              const type = match[1];
+              
+              const labelMap = {
+                'feat': 'enhancement',
+                'feature': 'enhancement',
+                'fix': 'bug',
+                'bugfix': 'bug',
+                'docs': 'documentation',
+                'doc': 'documentation',
+                'style': 'style',
+                'refactor': 'refactor',
+                'perf': 'performance',
+                'performance': 'performance',
+                'test': 'tests',
+                'testing': 'tests',
+                'build': 'build',
+                'ci': 'ci',
+                'chore': 'chore',
+                'revert': 'revert',
+                'security': 'security',
+                'deps': 'dependencies',
+                'dependencies': 'dependencies',
+                'release': 'release'
+              };
+              
+              const label = labelMap[type];
+              if (label) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  labels: [label]
+                });
+                console.log(`Added label: ${label}`);
+              }
+            }
+      
+      - name: Comment on invalid title
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            const validTypes = [
+              'feat', 'fix', 'docs', 'style', 'refactor', 
+              'perf', 'test', 'build', 'ci', 'chore', 'revert',
+              'security', 'deps', 'release'
+            ];
+            
+            const comment = `## ❌ Invalid PR Title Format
+            
+            Your PR title doesn't follow [Conventional Commits](https://www.conventionalcommits.org/) format.
+            
+            **Expected format:** \`type(scope): description\`
+            
+            **Valid types:** \`${validTypes.join('`, `')}\`
+            
+            **Examples:**
+            - \`feat: Add new diff viewer\`
+            - \`fix(cli): Resolve link command issue\`
+            - \`docs: Update installation guide\`
+            - \`refactor(app): Simplify DotstashManager\`
+            - \`security: Patch path traversal vulnerability\`
+            
+            **Your title:** \`${pr.title}\`
+            
+            ---
+            
+            Please update your PR title to follow the convention. You can edit it by clicking the edit button on the PR title.
+            
+            <details>
+            <summary>📝 Conventional Commits Reference</summary>
+            
+            | Type | Description |
+            |------|-------------|
+            | \`feat\` | New feature |
+            | \`fix\` | Bug fix |
+            | \`docs\` | Documentation only |
+            | \`style\` | Code style (formatting, semicolons, etc.) |
+            | \`refactor\` | Code change that neither fixes a bug nor adds a feature |
+            | \`perf\` | Performance improvement |
+            | \`test\` | Adding or updating tests |
+            | \`build\` | Changes to build system or dependencies |
+            | \`ci\` | Changes to CI configuration |
+            | \`chore\` | Other changes that don't modify src or test files |
+            | \`revert\` | Reverts a previous commit |
+            | \`security\` | Security improvements |
+            | \`deps\` | Dependency updates |
+            
+            </details>`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: comment
+            });
+
+      - name: Add invalid title label
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: ['needs-title-update']
+            });

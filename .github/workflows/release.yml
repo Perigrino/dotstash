@@ -1,0 +1,188 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        default: '2.0.0'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install CLI dependencies
+        run: npm ci
+      
+      - name: Build Swift app
+        run: |
+          cd SwiftApp
+          swift build -c release
+      
+      - name: Create app bundle
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=${VERSION:-${{ github.event.inputs.version }}}
+          
+          mkdir -p build/Dotstash.app/Contents/{MacOS,Resources,Frameworks}
+          
+          cp SwiftApp/.build/release/DotstashApp build/Dotstash.app/Contents/MacOS/Dotstash
+          
+          # Create Info.plist
+          cat > build/Dotstash.app/Contents/Info.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleDevelopmentRegion</key>
+              <string>en</string>
+              <key>CFBundleExecutable</key>
+              <string>Dotstash</string>
+              <key>CFBundleIconFile</key>
+              <string>AppIcon</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.perigrino.dotstash</string>
+              <key>CFBundleInfoDictionaryVersion</key>
+              <string>6.0</string>
+              <key>CFBundleName</key>
+              <string>Dotstash</string>
+              <key>CFBundleDisplayName</key>
+              <string>Dotstash</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>$VERSION</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>14.0</string>
+              <key>LSUIElement</key>
+              <false/>
+              <key>NSHumanReadableCopyright</key>
+              <string>Copyright © 2026 Perigrino. All rights reserved.</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>com.apple.security.app-sandbox</key>
+              <false/>
+              <key>com.apple.security.files.home-relative-path.read-write</key>
+              <array>
+                  <string>/</string>
+              </array>
+              <key>SUFeedURL</key>
+              <string>https://raw.githubusercontent.com/YOUR_USERNAME/dotstash/main/appcast.xml</string>
+          </dict>
+          </plist>
+          PLIST
+      
+      - name: Generate app icon
+        run: |
+          cat > /tmp/create_icon.swift << 'SWIFT'
+          import Cocoa
+          let size = NSSize(width: 1024, height: 1024)
+          let image = NSImage(size: size)
+          image.lockFocus()
+          let path = NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: 224, yRadius: 224)
+          let gradient = NSGradient(starting: NSColor(red: 0.4, green: 0.49, blue: 0.92, alpha: 1.0),
+                                   ending: NSColor(red: 0.46, green: 0.29, blue: 0.64, alpha: 1.0))
+          gradient?.draw(in: path, angle: 135)
+          NSColor.white.setStroke()
+          NSBezierPath.defaultLineWidth = 60
+          let topPath = NSBezierPath()
+          topPath.move(to: NSPoint(x: 256, y: 512))
+          topPath.line(to: NSPoint(x: 768, y: 512))
+          topPath.stroke()
+          let leftPath = NSBezierPath()
+          leftPath.move(to: NSPoint(x: 256, y: 512))
+          leftPath.line(to: NSPoint(x: 256, y: 384))
+          leftPath.stroke()
+          let rightPath = NSBezierPath()
+          rightPath.move(to: NSPoint(x: 768, y: 512))
+          rightPath.line(to: NSPoint(x: 768, y: 384))
+          rightPath.stroke()
+          let bottomPath = NSBezierPath()
+          bottomPath.move(to: NSPoint(x: 256, y: 512))
+          bottomPath.line(to: NSPoint(x: 256, y: 640))
+          bottomPath.line(to: NSPoint(x: 768, y: 640))
+          bottomPath.line(to: NSPoint(x: 768, y: 512))
+          bottomPath.stroke()
+          image.unlockFocus()
+          if let tiffData = image.tiffRepresentation,
+             let bitmap = NSBitmapImageRep(data: tiffData),
+             let pngData = bitmap.representation(using: .png, properties: [:]) {
+              let url = URL(fileURLWithPath: "/tmp/dotstash_icon.png")
+              try! pngData.write(to: url)
+          }
+          SWIFT
+          
+          swift /tmp/create_icon.swift
+          
+          mkdir -p /tmp/Dotstash.iconset
+          for size in 16 32 64 128 256 512; do
+              sips -z $size $size /tmp/dotstash_icon.png --out "/tmp/Dotstash.iconset/icon_${size}x${size}.png" > /dev/null 2>&1
+              sips -z $((size*2)) $((size*2)) /tmp/dotstash_icon.png --out "/tmp/Dotstash.iconset/icon_${size}x${size}@2x.png" > /dev/null 2>&1
+          done
+          
+          iconutil -c icns /tmp/Dotstash.iconset -o build/Dotstash.app/Contents/Resources/AppIcon.icns
+      
+      - name: Code sign
+        run: codesign --force --deep --sign - build/Dotstash.app
+      
+      - name: Create DMG
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=${VERSION:-${{ github.event.inputs.version }}}
+          
+          TEMP_DIR=build/dmg_temp
+          mkdir -p $TEMP_DIR
+          cp -R build/Dotstash.app $TEMP_DIR/
+          ln -s /Applications $TEMP_DIR/Applications
+          
+          hdiutil create \
+              -volname "Dotstash" \
+              -srcfolder $TEMP_DIR \
+              -ov \
+              -format UDZO \
+              -imagekey zlib-level=9 \
+              "build/Dotstash-$VERSION.dmg"
+          
+          rm -rf $TEMP_DIR
+      
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dotstash-dmg
+          path: build/*.dmg
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build/*.dmg
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Generate checksum
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=${VERSION:-${{ github.event.inputs.version }}}
+          shasum -a 256 "build/Dotstash-$VERSION.dmg" > "build/Dotstash-$VERSION.dmg.sha256"
+          cat "build/Dotstash-$VERSION.dmg.sha256"

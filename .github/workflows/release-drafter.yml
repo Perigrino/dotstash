@@ -1,0 +1,96 @@
+name: Release Drafter
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  update_release_draft:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Release Drafter
+        uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+          publish: false
+          prerelease: false
+          header: |
+            ## 🚀 What's New
+            
+            Welcome to Dotstash! 🎉
+            
+            This release includes the following changes:
+          footer: |
+            ---
+            
+            ## 🙏 Thanks
+            
+            Thanks to all contributors who made this release possible!
+            
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.release.tag_name }}...v${{ github.event.release.tag_name }}
+            
+            ## 📦 Installation
+            
+            ### DMG Installer
+            1. Download `Dotstash-${{ github.event.release.tag_name }}.dmg` below
+            2. Open the DMG
+            3. Drag Dotstash to Applications
+            4. Launch from Applications
+            
+            ### CLI
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd dotstash
+            npm install && npm link
+            ```
+            
+            ### Auto-Update
+            If you have Dotstash installed, it will automatically check for updates.
+            
+            ---
+            
+            Made with ❤️ by Perigrino
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-label new issues
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Update release notes when PR is merged
+            const pr = context.payload.pull_request;
+            console.log(`PR #${pr.number} merged: ${pr.title}`);
+            
+            // Add to release notes
+            const body = pr.body || '';
+            const title = pr.title;
+            
+            // Determine category
+            let category = 'Other Changes';
+            if (title.match(/^(feat|add|new)/i)) category = '🚀 Features';
+            else if (title.match(/^(fix|bug|patch)/i)) category = '🐛 Bug Fixes';
+            else if (title.match(/^(doc|readme)/i)) category = '📚 Documentation';
+            else if (title.match(/^(refactor|cleanup)/i)) category = '🔧 Refactoring';
+            else if (title.match(/^(test)/i)) category = '🧪 Tests';
+            else if (title.match(/^(chore|ci|build)/i)) category = '🛠️ Maintenance';
+            
+            console.log(`Category: ${category}`);

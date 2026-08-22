@@ -1,0 +1,166 @@
+name: Update Changelog
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to add (e.g., 2.1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Get release info
+        id: release
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            BODY="Manual update for version $VERSION"
+            DATE=$(date +%Y-%m-%d)
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+            BODY="${{ github.event.release.body }}"
+            DATE=$(date -d "${{ github.event.release.published_at }}" +%Y-%m-%d || date +%Y-%m-%d)
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+          
+          echo "Version: $VERSION"
+          echo "Date: $DATE"
+      
+      - name: Parse release notes
+        id: notes
+        run: |
+          BODY="${{ steps.release.outputs.body }}"
+          
+          # Extract features
+          FEATURES=$(echo "$BODY" | grep -A 1000 "### 🚀 Features\|### Features" | grep -B 1000 "###\|---" | grep "^-\|^\*" | head -20 || echo "")
+          
+          # Extract bug fixes
+          FIXES=$(echo "$BODY" | grep -A 1000 "### 🐛 Bug Fixes\|### Bug Fixes" | grep -B 1000 "###\|---" | grep "^-\|^\*" | head -20 || echo "")
+          
+          # Extract security
+          SECURITY=$(echo "$BODY" | grep -A 1000 "### 🔒 Security\|### Security" | grep -B 1000 "###\|---" | grep "^-\|^\*" | head -10 || echo "")
+          
+          # Extract breaking changes
+          BREAKING=$(echo "$BODY" | grep -A 1000 "### ⚠️ Breaking\|### Breaking" | grep -B 1000 "###\|---" | grep "^-\|^\*" | head -10 || echo "")
+          
+          # Store as outputs
+          {
+            echo "features<<FEATURES_EOF"
+            echo "$FEATURES"
+            echo "FEATURES_EOF"
+          } >> $GITHUB_OUTPUT
+          
+          {
+            echo "fixes<<FIXES_EOF"
+            echo "$FIXES"
+            echo "FIXES_EOF"
+          } >> $GITHUB_OUTPUT
+          
+          {
+            echo "security<<SECURITY_EOF"
+            echo "$SECURITY"
+            echo "SECURITY_EOF"
+          } >> $GITHUB_OUTPUT
+          
+          {
+            echo "breaking<<BREAKING_EOF"
+            echo "$BREAKING"
+            echo "BREAKING_EOF"
+          } >> $GITHUB_OUTPUT
+      
+      - name: Update CHANGELOG.md
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          DATE="${{ steps.release.outputs.date }}"
+          FEATURES="${{ steps.notes.outputs.features }}"
+          FIXES="${{ steps.notes.outputs.fixes }}"
+          SECURITY="${{ steps.notes.outputs.security }}"
+          BREAKING="${{ steps.notes.outputs.breaking }}"
+          
+          # Create new entry
+          NEW_ENTRY="## [$VERSION] - $DATE\n"
+          NEW_ENTRY+="\n"
+          
+          if [ -n "$BREAKING" ]; then
+            NEW_ENTRY+="### ⚠️ Breaking Changes\n"
+            NEW_ENTRY+="$BREAKING\n"
+            NEW_ENTRY+="\n"
+          fi
+          
+          if [ -n "$FEATURES" ]; then
+            NEW_ENTRY+="### 🚀 Features\n"
+            NEW_ENTRY+="$FEATURES\n"
+            NEW_ENTRY+="\n"
+          fi
+          
+          if [ -n "$FIXES" ]; then
+            NEW_ENTRY+="### 🐛 Bug Fixes\n"
+            NEW_ENTRY+="$FIXES\n"
+            NEW_ENTRY+="\n"
+          fi
+          
+          if [ -n "$SECURITY" ]; then
+            NEW_ENTRY+="### 🔒 Security\n"
+            NEW_ENTRY+="$SECURITY\n"
+            NEW_ENTRY+="\n"
+          fi
+          
+          # If no sections found, add placeholder
+          if [ -z "$FEATURES" ] && [ -z "$FIXES" ] && [ -z "$SECURITY" ] && [ -z "$BREAKING" ]; then
+            NEW_ENTRY+="### Changes\n"
+            NEW_ENTRY+="- See [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/$VERSION) for details\n"
+            NEW_ENTRY+="\n"
+          fi
+          
+          NEW_ENTRY+="---\n"
+          NEW_ENTRY+="\n"
+          
+          # Read existing changelog
+          if [ -f CHANGELOG.md ]; then
+            EXISTING=$(cat CHANGELOG.md)
+          else
+            EXISTING="# 📋 Changelog\n\nAll notable changes to Dotstash will be documented in this file.\n\n---\n"
+          fi
+          
+          # Find insertion point (after header, before first version)
+          HEADER=$(echo "$EXISTING" | head -5)
+          REST=$(echo "$EXISTING" | tail -n +6)
+          
+          # Write new changelog
+          echo -e "$HEADER" > CHANGELOG.md
+          echo -e "\n$NEW_ENTRY" >> CHANGELOG.md
+          echo -e "$REST" >> CHANGELOG.md
+          
+          echo "Updated CHANGELOG.md with version $VERSION"
+      
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git add CHANGELOG.md
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: Update CHANGELOG.md for v${{ steps.release.outputs.version }}"
+            git push
+          fi

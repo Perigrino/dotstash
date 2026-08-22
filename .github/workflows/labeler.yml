@@ -1,0 +1,130 @@
+name: Issue Labeler
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    
+    steps:
+      - name: Auto-label bug reports
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title.toLowerCase();
+            const body = issue.body ? issue.body.toLowerCase() : '';
+            
+            // Bug report detection
+            if (title.includes('[bug]') || title.includes('bug:') || 
+                body.includes('## 🐛 bug description') ||
+                body.includes('steps to reproduce')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['bug', 'needs-triage']
+              });
+              console.log('Labeled as bug report');
+            }
+            
+            // Feature request detection
+            if (title.includes('[feature]') || title.includes('feature:') ||
+                title.includes('[enhancement]') || title.includes('enhancement:') ||
+                body.includes('## ✨ feature description') ||
+                body.includes('## 🎯 use case')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['enhancement', 'needs-triage']
+              });
+              console.log('Labeled as feature request');
+            }
+            
+            // Priority detection
+            if (title.includes('urgent') || title.includes('critical') || 
+                title.includes('security') || title.includes('data loss')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['priority: high']
+              });
+              console.log('Labeled as high priority');
+            }
+            
+            // Component detection
+            if (body.includes('cli') || body.includes('command line')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['component: cli']
+              });
+            }
+            
+            if (body.includes('swift') || body.includes('swiftui') || body.includes('app')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['component: app']
+              });
+            }
+            
+            if (body.includes('diff') || body.includes('viewer')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['component: diff']
+              });
+            }
+            
+            if (body.includes('symlink') || body.includes('link')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['component: link']
+              });
+            }
+
+      - name: Add needs info label for incomplete issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body ? issue.body : '';
+            
+            // Check if bug report is incomplete
+            if (body.includes('## 🐛 Bug Description')) {
+              const hasSteps = body.includes('## 🔄 Steps to Reproduce');
+              const hasExpected = body.includes('## ✅ Expected Behavior');
+              const hasEnvironment = body.includes('## 📋 Environment');
+              
+              if (!hasSteps || !hasExpected || !hasEnvironment) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: ['needs-info']
+                });
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: '👋 Thanks for opening this issue! \n\nTo help us investigate, could you please fill in the missing sections:\n\n' +
+                    (!hasSteps ? '- [ ] Steps to Reproduce\n' : '') +
+                    (!hasExpected ? '- [ ] Expected Behavior\n' : '') +
+                    (!hasEnvironment ? '- [ ] Environment Details\n' : '') +
+                    '\nThis will help us resolve your issue faster! 🚀'
+                });
+              }
+            }

@@ -1,0 +1,72 @@
+version: 2
+
+updates:
+  # NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    
+    # Groups related dependencies
+    groups:
+      development:
+        dependency-type: "development"
+        patterns:
+          - "*"
+      production:
+        dependency-type: "production"
+        patterns:
+          - "*"
+    
+    # Review settings
+    open-pull-requests-limit: 10
+    reviewers:
+      - "perigrino"
+    
+    # Commit message prefix
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    
+    # Labels
+    labels:
+      - "dependencies"
+      - "automated"
+    
+    # Ignore major versions (optional)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    
+    groups:
+      actions:
+        patterns:
+          - "*"
+    
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+
+  # Swift packages (manual - SwiftPM doesn't have standard manifest)
+  # Note: Swift packages are managed via Package.swift
+  # Consider using https://github.com/Aimworx/swift-dependencies-updater
+
+# Security updates are enabled by default
+# Dependabot will automatically create PRs for security vulnerabilities

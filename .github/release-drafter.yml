@@ -1,0 +1,141 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+      - 'enhancement'
+      - 'new-feature'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+      - 'fix'
+      - 'bugfix'
+      - 'bug: confirmed'
+  - title: '📚 Documentation'
+    labels:
+      - 'documentation'
+      - 'docs'
+  - title: '🎨 UI/UX Improvements'
+    labels:
+      - 'ui'
+      - 'ux'
+      - 'design'
+  - title: '⚡ Performance'
+    labels:
+      - 'performance'
+      - 'optimization'
+      - 'speed'
+  - title: '🔧 Refactoring'
+    labels:
+      - 'refactor'
+      - 'refactoring'
+      - 'cleanup'
+  - title: '🧪 Tests'
+    labels:
+      - 'test'
+      - 'tests'
+      - 'testing'
+  - title: '🔒 Security'
+    labels:
+      - 'security'
+      - 'vulnerability'
+  - title: '📦 Dependencies'
+    labels:
+      - 'dependencies'
+      - 'dep'
+      - 'dependabot'
+  - title: '🛠️ Maintenance'
+    labels:
+      - 'chore'
+      - 'ci'
+      - 'build'
+      - 'github-actions'
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&'
+
+no-changes-template: 'No changes since last release.'
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+      - 'breaking'
+      - 'breaking-change'
+  minor:
+    labels:
+      - 'minor'
+      - 'feature'
+      - 'enhancement'
+      - 'new-feature'
+  patch:
+    labels:
+      - 'patch'
+      - 'bug'
+      - 'fix'
+      - 'bugfix'
+      - 'documentation'
+      - 'chore'
+  default: patch
+
+autolabeler:
+  - label: 'chore'
+    title:
+      - '/chore/i'
+  - label: 'bug'
+    title:
+      - '/fix/i'
+      - '/bug/i'
+  - label: 'enhancement'
+    title:
+      - '/feat/i'
+      - '/feature/i'
+      - '/add/i'
+  - label: 'documentation'
+    title:
+      - '/doc/i'
+      - '/readme/i'
+
+filter-by-commitish: true
+
+commitish: main
+
+header: |
+  ## 🚀 What's New
+  
+  Welcome to Dotstash $RESOLVED_VERSION! 🎉
+  
+  This release includes the following changes:
+
+footer: |
+  ---
+  
+  ## 🙏 Thanks
+  
+  Thanks to all contributors who made this release possible!
+  
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+  
+  ## 📦 Installation
+  
+  ### DMG Installer
+  1. Download `Dotstash-$RESOLVED_VERSION.dmg` below
+  2. Open the DMG
+  3. Drag Dotstash to Applications
+  4. Launch from Applications
+  
+  ### CLI
+  ```bash
+  git clone https://github.com/$OWNER/$REPOSITORY.git
+  cd $REPOSITORY
+  npm install && npm link
+  ```
+  
+  ### Auto-Update
+  If you have Dotstash installed, it will automatically check for updates.
+  
+  ---
+  
+  Made with ❤️ by Perigrino

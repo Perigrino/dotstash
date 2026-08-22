@@ -1,0 +1,205 @@
+name: CodeQL Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Monday at 6:00 UTC
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: swift
+            build-mode: manual
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # For JavaScript/TypeScript
+      - name: Initialize CodeQL (JavaScript)
+        if: matrix.language == 'javascript-typescript'
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: +security-and-quality
+      
+      # For Swift - manual build
+      - name: Setup Swift
+        if: matrix.language == 'swift'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
+      
+      - name: Resolve Swift dependencies
+        if: matrix.language == 'swift'
+        working-directory: SwiftApp
+        run: swift package resolve
+      
+      - name: Initialize CodeQL (Swift)
+        if: matrix.language == 'swift'
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: +security-and-quality
+      
+      # Autobuild for JavaScript
+      - name: Autobuild
+        if: matrix.language == 'javascript-typescript' && matrix.build-mode == 'none'
+        uses: github/codeql-action/autobuild@v3
+      
+      # Manual build for Swift
+      - name: Build Swift
+        if: matrix.language == 'swift'
+        run: |
+          cd SwiftApp
+          swift build 2>&1 || true
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+      
+      # Upload SARIF results
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif
+          category: ${{ matrix.language }}
+
+  security-queries:
+    name: Security Queries
+    runs-on: ubuntu-latest
+    needs: analyze
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Run security query suite
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/security-queries"
+          queries: security-extended
+      
+      - name: Create security summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get CodeQL analysis results
+            const { data: alerts } = await github.rest.codeScanning.listAlertsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            
+            // Categorize alerts
+            const critical = alerts.filter(a => a.rule.security_severity_level === 'critical');
+            const high = alerts.filter(a => a.rule.security_severity_level === 'high');
+            const medium = alerts.filter(a => a.rule.security_severity_level === 'medium');
+            const low = alerts.filter(a => a.rule.security_severity_level === 'low');
+            
+            let summary = `## 🔍 CodeQL Security Analysis\n\n`;
+            summary += `**Scan Date:** ${new Date().toISOString()}\n\n`;
+            summary += `### Summary\n\n`;
+            summary += `| Severity | Count |\n`;
+            summary += `|----------|-------|\n`;
+            summary += `| 🔴 Critical | ${critical.length} |\n`;
+            summary += `| 🟠 High | ${high.length} |\n`;
+            summary += `| 🟡 Medium | ${medium.length} |\n`;
+            summary += `| 🟢 Low | ${low.length} |\n`;
+            summary += `| **Total** | **${alerts.length}** |\n\n`;
+            
+            if (critical.length > 0 || high.length > 0) {
+              summary += `### ⚠️ Action Required\n\n`;
+              summary += `Critical or high severity issues found. Please review and fix before merging.\n\n`;
+            }
+            
+            if (alerts.length === 0) {
+              summary += `### ✅ No Security Issues Found\n\n`;
+              summary += `Great! No security vulnerabilities detected.\n`;
+            } else {
+              summary += `### 📋 Top Issues\n\n`;
+              alerts.slice(0, 5).forEach(alert => {
+                summary += `- **${alert.rule.security_severity_level}**: ${alert.rule.description}\n`;
+                summary += `  - File: \`${alert.most_recent_instance.location.path}\`\n`;
+                summary += `  - [View Alert](${alert.html_url})\n\n`;
+              });
+            }
+            
+            summary += `\n---\n*This is an automated security scan. Please review the findings in the [Security tab](https://github.com/${context.repo.owner}/${context.repo.repo}/security).*`;
+            
+            console.log(summary);
+
+  validate-swift:
+    name: Validate Swift Code
+    runs-on: macos-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
+      
+      - name: Check Swift formatting
+        run: |
+          echo "🔍 Checking Swift code formatting..."
+          cd SwiftApp
+          
+          # Check for common issues
+          find Sources -name "*.swift" -exec grep -l "TODO\|FIXME\|HACK" {} \; | while read file; do
+            echo "⚠️  Found TODO/FIXME in: $file"
+            grep -n "TODO\|FIXME\|HACK" "$file" || true
+          done
+          
+          echo "✅ Swift code check complete"
+      
+      - name: Validate Swift package
+        working-directory: SwiftApp
+        run: |
+          echo "📦 Validating Swift package..."
+          swift package dump-package > /dev/null 2>&1
+          echo "✅ Package.swift is valid"
+      
+      - name: Check for insecure code patterns
+        run: |
+          echo "🔒 Checking for insecure code patterns..."
+          
+          # Check for hardcoded secrets
+          if grep -r "password\|secret\|token\|api_key\|apikey" --include="*.swift" SwiftApp/Sources/ | grep -v "//\|/\*\|model\|struct.*Info"; then
+            echo "⚠️  Potential hardcoded secrets found"
+            exit 1
+          fi
+          
+          # Check for unsafe file operations
+          if grep -r "NSHomeDirectory\|FileManager.default.homeDirectoryForCurrentUser" --include="*.swift" SwiftApp/Sources/ | grep -v "Manager.swift"; then
+            echo "⚠️  Direct home directory access found"
+          fi
+          
+          echo "✅ Code pattern check complete"

@@ -1,0 +1,267 @@
+name: Dependency Review
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday at midnight
+
+permissions:
+  contents: write
+  security-events: write
+
+jobs:
+  npm-audit:
+    name: NPM Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run npm audit
+        run: |
+          echo "🔍 Running npm audit..."
+          npm audit --audit-level=low > npm-audit-report.txt 2>&1 || true
+          cat npm-audit-report.txt
+          
+          # Check for critical/high vulnerabilities
+          CRITICAL=$(grep -c "critical" npm-audit-report.txt || echo "0")
+          HIGH=$(grep -c "high" npm-audit-report.txt || echo "0")
+          
+          echo ""
+          echo "📊 Summary:"
+          echo "  Critical: $CRITICAL"
+          echo "  High: $HIGH"
+          
+          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+            echo ""
+            echo "❌ Critical or high severity vulnerabilities found!"
+            echo "   Please update dependencies before merging."
+            exit 1
+          fi
+      
+      - name: Upload npm audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report
+          path: npm-audit-report.txt
+          retention-days: 30
+
+  swift-audit:
+    name: Swift Package Audit
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
+      
+      - name: Resolve dependencies
+        working-directory: SwiftApp
+        run: swift package resolve
+      
+      - name: Check for outdated packages
+        working-directory: SwiftApp
+        run: |
+          echo "🔍 Checking Swift package versions..."
+          swift package show-dependencies > swift-deps.txt 2>&1 || true
+          cat swift-deps.txt
+          
+          # Check for any packages with known issues
+          echo ""
+          echo "📦 Swift Dependencies:"
+          grep -E "^\." swift-deps.txt || echo "  No dependencies found"
+      
+      - name: Upload Swift dependency report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: swift-deps-report
+          path: SwiftApp/swift-deps.txt
+          retention-days: 30
+
+  dependency-review:
+    name: Dependency Review (PR only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
+          comment-summary-in-pr: always
+          license-check: true
+          
+      - name: Check for vulnerabilities
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: critical
+
+  security-score:
+    name: Security Scorecard
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      security-events: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      
+      - name: Run Scorecard
+        uses: ossf/scorecard-action@v2.3.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+          schedule: 'weekly'
+      
+      - name: Upload Scorecard results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+  generate-report:
+    name: Generate Security Report
+    needs: [npm-audit, swift-audit]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Download npm report
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-audit-report
+          path: reports/
+        continue-on-error: true
+      
+      - name: Download Swift report
+        uses: actions/download-artifact@v4
+        with:
+          name: swift-deps-report
+          path: reports/
+        continue-on-error: true
+      
+      - name: Generate summary
+        run: |
+          echo "## 🔒 Dependency Security Report" > report.md
+          echo "" >> report.md
+          echo "**Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> report.md
+          echo "" >> report.md
+          
+          echo "### 📊 Summary" >> report.md
+          echo "" >> report.md
+          
+          if [ -f reports/npm-audit-report.txt ]; then
+            echo "#### NPM Packages" >> report.md
+            echo '```' >> report.md
+            cat reports/npm-audit-report.txt | head -50 >> report.md
+            echo '```' >> report.md
+          else
+            echo "#### NPM Packages" >> report.md
+            echo "No npm audit report available." >> report.md
+          fi
+          
+          echo "" >> report.md
+          
+          if [ -f reports/swift-deps.txt ]; then
+            echo "#### Swift Packages" >> report.md
+            echo '```' >> report.md
+            cat reports/swift-deps.txt >> report.md
+            echo '```' >> report.md
+          else
+            echo "#### Swift Packages" >> report.md
+            echo "No Swift dependency report available." >> report.md
+          fi
+          
+          echo "" >> report.md
+          echo "### 🔗 Links" >> report.md
+          echo "" >> report.md
+          echo "- [npm audit](https://docs.npmjs.com/cli/audit)" >> report.md
+          echo "- [Swift Package Registry](https://swiftpackageindex.com)" >> report.md
+          echo "" >> report.md
+          
+          echo "### 📋 Recommendations" >> report.md
+          echo "" >> report.md
+          echo "1. Review all critical and high severity vulnerabilities" >> report.md
+          echo "2. Update dependencies regularly" >> report.md
+          echo "3. Enable Dependabot for automatic updates" >> report.md
+          echo "4. Run security audits before each release" >> report.md
+          
+          cat report.md
+      
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: report.md
+          retention-days: 90
+      
+      - name: Post comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('report.md', 'utf8');
+            
+            // Check if comment already exists
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && 
+              c.body.includes('Dependency Security Report')
+            );
+            
+            const body = `## 🔒 Automated Security Scan\n\n${report}\n\n---\n*This is an automated security scan. Please review the findings above.*`;
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }

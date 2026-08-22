@@ -1,0 +1,43 @@
+title: Dotstash
+description: A native macOS dotfiles manager
+url: https://perigrino.github.io
+baseurl: /dotstash
+logo: /assets/images/logo.png
+
+remote_theme: pages-themes/cayman@v0.2.0
+plugins:
+  - jekyll-remote-theme
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Navigation
+header_pages:
+  - index.md
+  - getting-started.md
+  - installation.md
+  - cli-reference.md
+  - app-guide.md
+  - safety.md
+  - contributing.md
+  - changelog.md
+
+# Collections
+collections:
+  guides:
+    output: true
+    permalink: /guides/:name/
+
+# Exclude from build
+exclude:
+  - node_modules
+  - vendor
+  - .bundle
+  - Gemfile.lock
+
+# Social
+github_username: perigrino
+
+# Analytics (optional)
+# google_analytics: UA-XXXXXXXX-X
