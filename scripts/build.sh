@@ -34,8 +34,14 @@ swift build -c release 2>&1 | tail -5
 echo "📦 Creating app bundle..."
 cp "$SWIFT_DIR/.build/arm64-apple-macosx/release/DotstashApp" "$BUNDLE_DIR/Contents/MacOS/$APP_NAME"
 
-# Sparkle framework is dynamically linked from the Swift package
-# No need to copy it into the app bundle
+# Copy Sparkle framework into app bundle
+echo "📦 Copying Sparkle framework..."
+mkdir -p "$BUNDLE_DIR/Contents/Frameworks"
+cp -R "$SWIFT_DIR/.build/arm64-apple-macosx/release/Sparkle.framework" "$BUNDLE_DIR/Contents/Frameworks/"
+
+# Update rpath for Sparkle
+codesign --remove-signature "$BUNDLE_DIR/Contents/MacOS/$APP_NAME" 2>/dev/null || true
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$BUNDLE_DIR/Contents/MacOS/$APP_NAME" 2>/dev/null || true
 
 # Create Info.plist
 echo "📝 Creating Info.plist..."
