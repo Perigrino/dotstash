@@ -16,14 +16,25 @@
 
 ### Option 1: DMG Installer (Recommended)
 
-1. **Download** the latest release:
-   - [Dotstash-1.0.0.dmg](https://github.com/YOUR_USERNAME/dotstash/releases/download/v1.0.0/Dotstash-1.0.0.dmg)
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/dotstash.git
+   cd dotstash
+   ```
 
-2. **Open** the DMG file
+2. **Build the DMG:**
+   ```bash
+   ./scripts/build.sh
+   ```
 
-3. **Drag** Dotstash to your Applications folder
+3. **Install the app:**
+   ```bash
+   open build/Dotstash-1.0.0.dmg
+   ```
 
-4. **Launch** Dotstash from Applications
+4. **Drag** Dotstash to your Applications folder
+
+5. **Launch** Dotstash from Applications
 
 > ⚠️ **First launch:** Since Dotstash is not notarized by Apple, you may need to:
 > - Right-click → Open (first time only)
