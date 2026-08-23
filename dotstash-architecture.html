@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dotstash Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Geist', sans-serif;
+    background: #f5f5f5;
+    color: #2d3142;
+    padding: 3rem;
+    min-height: 100vh;
+  }
+  .eyebrow {
+    font-family: 'Geist Mono', monospace;
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #7c5cbf;
+    margin-bottom: 0.5rem;
+  }
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.75rem;
+    font-weight: 400;
+    color: #2d3142;
+    margin-bottom: 0.5rem;
+  }
+  .subtitle {
+    font-family: 'Geist', sans-serif;
+    font-size: 14px;
+    color: #4f5d75;
+    margin-bottom: 2rem;
+  }
+  .diagram-container {
+    background: #ffffff;
+    border: 1px solid rgba(45,49,66,0.12);
+    border-radius: 8px;
+    padding: 1.5rem;
+    overflow-x: auto;
+  }
+  svg {
+    display: block;
+    margin: 0 auto;
+  }
+  .footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(45,49,66,0.10);
+    font-family: 'Geist Mono', monospace;
+    font-size: 8px;
+    color: #7a8399;
+    letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+
+<p class="eyebrow">System Architecture</p>
+<h1>Dotstash</h1>
+<p class="subtitle">Native macOS dotfiles manager — SwiftUI app + Node.js CLI</p>
+
+<div class="diagram-container">
+<svg role="img" aria-labelledby="dotstash-title dotstash-desc" viewBox="0 0 800 520" width="800" height="520" xmlns="http://www.w3.org/2000/svg">
+  <title id="dotstash-title">Dotstash Architecture</title>
+  <desc id="dotstash-desc">Architecture diagram showing the Dotstash system with three tiers: Presentation (SwiftUI App and CLI), Core Engine (DotstashManager, FileWatcher, DiffEngine), and Storage Layer (~/.dotstash directory with config and files).</desc>
+  
+  <defs>
+    <!-- Arrow markers -->
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7c5cbf"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/>
+    </marker>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#f5f5f5"/>
+  
+  <!-- Zone 1: Presentation Layer -->
+  <rect x="20" y="20" width="760" height="140" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+  <rect x="32" y="24" width="100" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="82" y="33" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PRESENTATION</text>
+  
+  <!-- SwiftUI App Node (Focal) -->
+  <rect x="40" y="48" width="180" height="96" rx="6" fill="#f5f5f5"/>
+  <rect x="40" y="48" width="180" height="96" rx="6" fill="rgba(124,92,191,0.08)" stroke="#7c5cbf" stroke-width="1.2"/>
+  <rect x="52" y="56" width="28" height="12" rx="2" fill="transparent" stroke="rgba(124,92,191,0.40)" stroke-width="0.8"/>
+  <text x="66" y="65" fill="rgba(124,92,191,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="130" y="80" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">SwiftUI App</text>
+  <text x="130" y="96" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">macOS 14+ • Menu Bar</text>
+  <text x="130" y="112" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Dashboard • Diff • Drag&Drop</text>
+  <text x="130" y="128" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">File Watcher • Auto-Update</text>
+  
+  <!-- CLI Node -->
+  <rect x="260" y="48" width="160" height="96" rx="6" fill="#f5f5f5"/>
+  <rect x="260" y="48" width="160" height="96" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+  <rect x="272" y="56" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+  <text x="286" y="65" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CLI</text>
+  <text x="340" y="80" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Node.js CLI</text>
+  <text x="340" y="96" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Node 18+ • npm</text>
+  <text x="340" y="112" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">add • link • list • diff</text>
+  <text x="340" y="128" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">status • export • import</text>
+  
+  <!-- Menu Bar Node -->
+  <rect x="460" y="48" width="140" height="96" rx="6" fill="#f5f5f5"/>
+  <rect x="460" y="48" width="140" height="96" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+  <rect x="472" y="56" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+  <text x="490" y="65" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MENU</text>
+  <text x="530" y="80" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Menu Bar</text>
+  <text x="530" y="96" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">StatusBarController</text>
+  <text x="530" y="112" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Badge Count</text>
+  <text x="530" y="128" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Quick Actions</text>
+  
+  <!-- Sparkle Node -->
+  <rect x="640" y="48" width="120" height="96" rx="6" fill="#f5f5f5"/>
+  <rect x="640" y="48" width="120" height="96" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+  <rect x="652" y="56" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+  <text x="670" y="65" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+  <text x="700" y="80" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Sparkle</text>
+  <text x="700" y="96" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Auto-Update</text>
+  <text x="700" y="112" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">EdDSA Signing</text>
+  <text x="700" y="128" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">appcast.xml</text>
+  
+  <!-- Zone 2: Core Engine -->
+  <rect x="20" y="180" width="760" height="160" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+  <rect x="32" y="184" width="80" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="72" y="193" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CORE ENGINE</text>
+  
+  <!-- DotstashManager Node (Focal) -->
+  <rect x="40" y="208" width="220" height="112" rx="6" fill="#f5f5f5"/>
+  <rect x="40" y="208" width="220" height="112" rx="6" fill="rgba(124,92,191,0.08)" stroke="#7c5cbf" stroke-width="1.2"/>
+  <rect x="52" y="216" width="52" height="12" rx="2" fill="transparent" stroke="rgba(124,92,191,0.40)" stroke-width="0.8"/>
+  <text x="78" y="225" fill="rgba(124,92,191,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MANAGER</text>
+  <text x="150" y="240" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">DotstashManager</text>
+  <text x="150" y="256" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Core Business Logic</text>
+  <text x="150" y="276" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Config Management</text>
+  <text x="150" y="292" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• File Operations</text>
+  <text x="150" y="308" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Drift Detection (SHA-256)</text>
+  
+  <!-- FileWatcher Node -->
+  <rect x="300" y="208" width="160" height="112" rx="6" fill="#f5f5f5"/>
+  <rect x="300" y="208" width="160" height="112" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+  <rect x="312" y="216" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+  <text x="332" y="225" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">WATCH</text>
+  <text x="380" y="240" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">FileWatcher</text>
+  <text x="380" y="256" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">GCD DispatchSource</text>
+  <text x="380" y="276" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• File System Events</text>
+  <text x="380" y="292" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Auto-Refresh</text>
+  <text x="380" y="308" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Debounced Updates</text>
+  
+  <!-- DiffEngine Node -->
+  <rect x="500" y="208" width="140" height="112" rx="6" fill="#f5f5f5"/>
+  <rect x="500" y="208" width="140" height="112" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+  <rect x="512" y="216" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+  <text x="530" y="225" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DIFF</text>
+  <text x="570" y="240" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">DiffEngine</text>
+  <text x="570" y="256" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">LCS Algorithm</text>
+  <text x="570" y="276" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Unified View</text>
+  <text x="570" y="292" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Side-by-Side</text>
+  <text x="570" y="308" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Syntax Highlight</text>
+  
+  <!-- SyntaxHighlighter Node -->
+  <rect x="680" y="208" width="100" height="112" rx="6" fill="#f5f5f5"/>
+  <rect x="680" y="208" width="100" height="112" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+  <rect x="692" y="216" width="44" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+  <text x="714" y="225" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SYNTAX</text>
+  <text x="730" y="240" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">SyntaxHL</text>
+  <text x="730" y="256" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Shell</text>
+  <text x="730" y="272" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• JSON</text>
+  <text x="730" y="288" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• YAML</text>
+  <text x="730" y="304" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• TOML</text>
+  
+  <!-- Zone 3: Storage Layer -->
+  <rect x="20" y="360" width="760" height="140" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+  <rect x="32" y="364" width="80" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="72" y="373" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">STORAGE</text>
+  
+  <!-- Config Store Node -->
+  <rect x="40" y="388" width="200" height="96" rx="6" fill="#f5f5f5"/>
+  <rect x="40" y="388" width="200" height="96" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+  <rect x="52" y="396" width="40" height="12" rx="2" fill="transparent" stroke="rgba(79,93,117,0.40)" stroke-width="0.8"/>
+  <text x="72" y="405" fill="rgba(79,93,117,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JSON</text>
+  <text x="140" y="420" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">dotstash.json</text>
+  <text x="140" y="436" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Config & Metadata</text>
+  <text x="140" y="456" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Dotfile Registry</text>
+  <text x="140" y="472" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• SHA-256 Hashes</text>
+  
+  <!-- Stash Directory Node -->
+  <rect x="280" y="388" width="200" height="96" rx="6" fill="#f5f5f5"/>
+  <rect x="280" y="388" width="200" height="96" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+  <rect x="292" y="396" width="44" height="12" rx="2" fill="transparent" stroke="rgba(79,93,117,0.40)" stroke-width="0.8"/>
+  <text x="314" y="405" fill="rgba(79,93,117,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DIR</text>
+  <text x="380" y="420" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">~/.dotstash/</text>
+  <text x="380" y="436" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Stashed Files</text>
+  <text x="380" y="456" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Namespaced Paths</text>
+  <text x="380" y="472" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">• Content Copies</text>
+  
+  <!-- Home Directory Node -->
+  <rect x="520" y="388" width="200" height="96" rx="6" fill="#f5f5f5"/>
+  <rect x="520" y="388" width="200" height="96" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+  <rect x="532" y="396" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+  <text x="552" y="405" fill="rgba(45,49,66,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LINK</text>
+  <text x="620" y="420" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">$HOME/</text>
+  <text x="620" y="436" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Symlinks</text>
+  <text x="620" y="456" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">~/.zshrc → stash/zshrc</text>
+  <text x="620" y="472" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">~/.gitconfig → stash/gitconfig</text>
+  
+  <!-- Arrows (drawn before boxes for z-order, but here we draw after for clarity) -->
+  <!-- Presentation to Core -->
+  <path d="M 130,144 L 130,160 Q 130,168 138,168 L 142,168 Q 150,168 150,176 L 150,208" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 340,144 L 340,160 Q 340,168 348,168 L 352,168 Q 360,168 360,176 L 360,208" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 530,144 L 530,208" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+  
+  <!-- Core to Storage -->
+  <path d="M 150,320 L 150,340 Q 150,348 158,348 L 162,348 Q 170,348 170,356 L 170,388" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 380,320 L 380,388" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 570,320 L 570,340 Q 570,348 578,348 L 582,348 Q 590,348 590,356 L 590,388" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+  
+  <!-- Storage internal: Config to Stash -->
+  <path d="M 240,436 L 280,436" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  
+  <!-- Storage internal: Stash to Home (symlink) -->
+  <path d="M 480,436 L 520,436" fill="none" stroke="#7c5cbf" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  
+  <!-- Arrow labels -->
+  <rect x="114" y="152" width="32" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="130" y="161" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CALL</text>
+  
+  <rect x="324" y="152" width="32" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="340" y="161" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CALL</text>
+  
+  <rect x="514" y="152" width="32" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="530" y="161" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CALL</text>
+  
+  <rect x="134" y="332" width="32" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="150" y="341" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">READ</text>
+  
+  <rect x="364" y="348" width="32" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="380" y="357" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SYNC</text>
+  
+  <rect x="554" y="332" width="36" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="572" y="341" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DIFF</text>
+  
+  <rect x="244" y="424" width="32" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="260" y="433" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MAP</text>
+  
+  <rect x="484" y="420" width="32" height="12" rx="2" fill="#f5f5f5"/>
+  <text x="500" y="429" fill="#7c5cbf" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LINK</text>
+  
+</svg>
+</div>
+
+<div class="footer">
+  <p>Dotstash Architecture • Generated August 22, 2026 • MIT License</p>
+</div>
+
+</body>
+</html>
