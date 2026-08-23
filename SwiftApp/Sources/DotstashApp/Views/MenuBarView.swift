@@ -148,12 +148,27 @@ struct MenuBarView: View {
             Divider()
             
             // Updates & Quit
-            MenuBarAction(
-                icon: "arrow.triangle.2.circlepath",
-                title: "Check for Updates...",
-                color: .blue
-            ) {
-                updaterController.checkForUpdates()
+            if updaterController.isUpdaterEnabled {
+                MenuBarAction(
+                    icon: "arrow.triangle.2.circlepath",
+                    title: "Check for Updates...",
+                    color: .blue
+                ) {
+                    updaterController.checkForUpdates()
+                }
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 20)
+                    Text("Updates not configured")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
             }
             
             MenuBarAction(

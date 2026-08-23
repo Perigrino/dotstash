@@ -7,42 +7,62 @@ import Sparkle
 /// Provides a simple interface for the SwiftUI app.
 @MainActor
 class UpdaterController: ObservableObject {
-    private let updaterController: SPUStandardUpdaterController
+    private var updaterController: SPUStandardUpdaterController?
     
     @Published var canCheckForUpdates = false
     @Published var lastCheckDate: Date?
+    @Published var isUpdaterEnabled = false
     
     init() {
-        // Initialize Sparkle updater
-        // The appcast URL is configured via Info.plist or SUFeedURL
-        updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
-        )
+        // Check if Sparkle is properly configured
+        let publicKey = Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String ?? ""
+        let feedURL = Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String ?? ""
         
-        // Observe updater state
-        updaterController.updater.publisher(for: \.canCheckForUpdates)
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$canCheckForUpdates)
+        // Only enable updater if keys are configured (not placeholder values)
+        if !publicKey.isEmpty && 
+           !publicKey.contains("YOUR_SPARKLE_PUBLIC_KEY_HERE") &&
+           !feedURL.contains("YOUR_USERNAME") {
+            
+            updaterController = SPUStandardUpdaterController(
+                startingUpdater: true,
+                updaterDelegate: nil,
+                userDriverDelegate: nil
+            )
+            
+            // Observe updater state
+            updaterController?.updater.publisher(for: \.canCheckForUpdates)
+                .receive(on: DispatchQueue.main)
+                .assign(to: &$canCheckForUpdates)
+            
+            isUpdaterEnabled = true
+            print("✅ Sparkle updater enabled")
+        } else {
+            print("⚠️ Sparkle updater disabled (not configured)")
+            isUpdaterEnabled = false
+            canCheckForUpdates = false
+        }
     }
     
     /// Check for updates manually
     func checkForUpdates() {
-        updaterController.checkForUpdates(nil)
+        guard isUpdaterEnabled, let updater = updaterController else {
+            print("⚠️ Updater not configured")
+            return
+        }
+        updater.checkForUpdates(nil)
         lastCheckDate = Date()
     }
     
     /// Enable/disable automatic updates
     var automaticallyChecksForUpdates: Bool {
-        get { updaterController.updater.automaticallyChecksForUpdates }
-        set { updaterController.updater.automaticallyChecksForUpdates = newValue }
+        get { updaterController?.updater.automaticallyChecksForUpdates ?? false }
+        set { updaterController?.updater.automaticallyChecksForUpdates = newValue }
     }
     
     /// Update interval in seconds (default: 86400 = 24 hours)
     var updateCheckInterval: Double {
-        get { updaterController.updater.updateCheckInterval }
-        set { updaterController.updater.updateCheckInterval = newValue }
+        get { updaterController?.updater.updateCheckInterval ?? 86400 }
+        set { updaterController?.updater.updateCheckInterval = newValue }
     }
     
     /// Get the current version string
