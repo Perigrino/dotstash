@@ -220,7 +220,13 @@ dotstash link
 
 Dotstash uses [Sparkle](https://sparkle-project.org/) for auto-updates (macOS app only).
 
-### Configuration
+### Current Status
+
+> ⚠️ **Auto-updates are disabled by default.** The updater gracefully disables itself when Sparkle keys are not configured. You'll see "Updates not configured" in the menu bar until you set up the keys.
+
+### Enabling Auto-Updates
+
+To enable auto-updates for your distribution:
 
 1. **Generate EdDSA key pair:**
    ```bash
@@ -233,6 +239,7 @@ Dotstash uses [Sparkle](https://sparkle-project.org/) for auto-updates (macOS ap
 
 2. **Update Info.plist:**
    - Replace `YOUR_SPARKLE_PUBLIC_KEY_HERE` with your public key
+   - Replace `YOUR_USERNAME` in the feed URL
 
 3. **Host appcast.xml:**
    - Update `YOUR_USERNAME` in `appcast.xml`
@@ -242,6 +249,14 @@ Dotstash uses [Sparkle](https://sparkle-project.org/) for auto-updates (macOS ap
    ```bash
    sign_update Dotstash-2.0.1.dmg
    ```
+
+### Behavior Without Keys
+
+When Sparkle keys are not configured:
+- The updater is automatically disabled
+- "Updates not configured" appears in the menu bar
+- The app functions normally otherwise
+- No error messages or crashes
 
 ---
 

@@ -126,7 +126,8 @@
 │  │  │ • Shell      │  │ • Sparkle    │  │              │             │   │
 │  │  │ • JSON       │  │ • Version    │  │ • Badge      │             │   │
 │  │  │ • YAML       │  │ • Check      │  │ • Icon       │             │   │
-│  │  │ • TOML       │  │              │  │              │             │   │
+│  │  │ • TOML       │  │ • Graceful   │  │              │             │   │
+│  │  │              │  │   fallback   │  │              │             │   │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘             │   │
 │  │                                                                     │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
@@ -272,6 +273,13 @@
 │  │  │  • Restrictive permissions (700/600)                        │   │   │
 │  │  │  • Namespaced paths (avoid collisions)                      │   │   │
 │  │  │  • No encryption (plain text storage)                       │   │   │
+│  │  └─────────────────────────────────────────────────────────────┘   │   │
+│  │                                                                     │   │
+│  │  Layer 5: GRACEFUL DEGRADATION                                      │   │
+│  │  ┌─────────────────────────────────────────────────────────────┐   │   │
+│  │  │  • Sparkle disables if keys not configured                  │   │   │
+│  │  │  • App functions normally without auto-updates              │   │   │
+│  │  │  • Clear status indicator in menu bar                       │   │   │
 │  │  └─────────────────────────────────────────────────────────────┘   │   │
 │  │                                                                     │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
@@ -445,4 +453,4 @@ Dotstash/
 
 ---
 
-**Last Updated:** August 22, 2026
+**Last Updated:** August 23, 2026

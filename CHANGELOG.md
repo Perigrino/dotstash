@@ -6,6 +6,27 @@ This changelog is automatically updated when new versions are released.
 
 ---
 
+## [2.0.1] - 2026-08-23
+
+### 🐛 Bug Fixes
+
+- **Sparkle Updater**: Fixed crash when Sparkle keys are not configured
+  - Updater now gracefully disables itself when placeholder keys detected
+  - Menu bar shows "Updates not configured" instead of crashing
+  - App continues to function normally without auto-updates
+- **App Bundle**: Fixed Sparkle framework not being bundled with app
+  - Build script now copies Sparkle.framework to Contents/Frameworks/
+  - Added rpath for framework loading
+
+### 🔧 Improvements
+
+- **Graceful Degradation**: Auto-update feature is now optional
+  - App works without Sparkle configuration
+  - Clear status indicator in menu bar
+  - No error dialogs on launch
+
+---
+
 ## [2.0.0] - 2026-08-22
 
 ### 🚀 Features

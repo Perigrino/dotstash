@@ -194,6 +194,15 @@ This is a Gatekeeper issue. Run:
 xattr -cr /Applications/Dotstash.app
 ```
 
+### "Unable to Check For Updates" Error
+
+This is expected when Sparkle keys are not configured. The app will:
+- Show "Updates not configured" in the menu bar
+- Continue to function normally
+- Not attempt to check for updates
+
+To enable auto-updates, see [Auto-Updates](#auto-updates) section.
+
 ### Permission Denied
 
 Make sure you have write permissions:
@@ -210,6 +219,20 @@ Make sure npm global bin is in your PATH:
 echo 'export PATH="$(npm config get prefix)/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
+
+### App Crashes on Launch
+
+If the app crashes immediately:
+
+1. Check Console.app for error messages
+2. Verify Sparkle framework is bundled:
+   ```bash
+   ls -la /Applications/Dotstash.app/Contents/Frameworks/
+   ```
+3. Remove quarantine attribute:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/Dotstash.app
+   ```
 
 ---
 
