@@ -24,15 +24,21 @@ jobs:
       
       - name: Get release info
         id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+          PUBLISHED_AT: ${{ github.event.release.published_at }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ github.event.inputs.version }}"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
             BODY="Manual update for version $VERSION"
             DATE=$(date +%Y-%m-%d)
           else
-            VERSION="${{ github.event.release.tag_name }}"
-            BODY="${{ github.event.release.body }}"
-            DATE=$(date -d "${{ github.event.release.published_at }}" +%Y-%m-%d || date +%Y-%m-%d)
+            VERSION="$TAG_NAME"
+            BODY="$RELEASE_BODY"
+            DATE=$(date -d "$PUBLISHED_AT" +%Y-%m-%d || date +%Y-%m-%d)
           fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -46,8 +52,10 @@ jobs:
       
       - name: Parse release notes
         id: notes
+        env:
+          RELEASE_BODY: ${{ steps.release.outputs.body }}
         run: |
-          BODY="${{ steps.release.outputs.body }}"
+          BODY="$RELEASE_BODY"
           
           # Extract features
           FEATURES=$(echo "$BODY" | grep -A 1000 "### 🚀 Features\|### Features" | grep -B 1000 "###\|---" | grep "^-\|^\*" | head -20 || echo "")
@@ -87,13 +95,16 @@ jobs:
           } >> $GITHUB_OUTPUT
       
       - name: Update CHANGELOG.md
+        env:
+          ENTRY_VERSION: ${{ steps.release.outputs.version }}
+          ENTRY_DATE: ${{ steps.release.outputs.date }}
+          FEATURES: ${{ steps.notes.outputs.features }}
+          FIXES: ${{ steps.notes.outputs.fixes }}
+          SECURITY: ${{ steps.notes.outputs.security }}
+          BREAKING: ${{ steps.notes.outputs.breaking }}
         run: |
-          VERSION="${{ steps.release.outputs.version }}"
-          DATE="${{ steps.release.outputs.date }}"
-          FEATURES="${{ steps.notes.outputs.features }}"
-          FIXES="${{ steps.notes.outputs.fixes }}"
-          SECURITY="${{ steps.notes.outputs.security }}"
-          BREAKING="${{ steps.notes.outputs.breaking }}"
+          VERSION="$ENTRY_VERSION"
+          DATE="$ENTRY_DATE"
           
           # Create new entry
           NEW_ENTRY="## [$VERSION] - $DATE\n"
