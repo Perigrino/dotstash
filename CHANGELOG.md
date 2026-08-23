@@ -4,6 +4,15 @@ All notable changes to Dotstash will be documented in this file.
 
 This changelog is automatically updated when new versions are released.
 
+## [1.0.0] - 2026-08-23
+
+### Changes
+- See [GitHub Release](https://github.com/Perigrino/dotstash/releases/tag/1.0.0) for details
+
+---
+
+
+
 ---
 
 ## [2.0.1] - 2026-08-23
