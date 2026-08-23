@@ -4,7 +4,6 @@ import Sparkle
 @main
 struct DotstashApp: App {
     @StateObject private var manager = DotstashManager()
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     // Auto-update controller
     @StateObject private var updaterController = UpdaterController()
@@ -16,26 +15,34 @@ struct DotstashApp: App {
                 .environmentObject(manager)
                 .environmentObject(updaterController)
                 .frame(minWidth: 800, minHeight: 500)
-                .onAppear {
-                    appDelegate.setupStatusBar(warningCount: manager.warningCount)
-                }
-                .onChange(of: manager.warningCount) { _, newValue in
-                    appDelegate.updateBadge(warningCount: newValue)
-                }
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 1000, height: 650)
         
-        // Menu bar icon
+        // Menu bar icon with popover menu
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(manager)
                 .environmentObject(updaterController)
         } label: {
-            Label {
-                Text("Dotstash")
-            } icon: {
-                Image(systemName: manager.warningCount > 0 ? "tray.full.fill" : "tray.full")
+            // Show badge count in menu bar if there are warnings
+            if manager.warningCount > 0 {
+                Label {
+                    Text("Dotstash")
+                } icon: {
+                    HStack(spacing: 2) {
+                        Image(systemName: "tray.full.fill")
+                        Text("\(manager.warningCount)")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                    }
+                }
+            } else {
+                Label {
+                    Text("Dotstash")
+                } icon: {
+                    Image(systemName: "tray.full")
+                }
             }
         }
         .menuBarExtraStyle(.window)
@@ -44,26 +51,6 @@ struct DotstashApp: App {
         Settings {
             SettingsView()
                 .environmentObject(updaterController)
-        }
-    }
-}
-
-// MARK: - App Delegate
-
-@MainActor
-class AppDelegate: NSObject, NSApplicationDelegate {
-    private let statusBarController = StatusBarController()
-    
-    nonisolated func setupStatusBar(warningCount: Int) {
-        Task { @MainActor in
-            statusBarController.setup()
-            statusBarController.updateBadge(warningCount: warningCount)
-        }
-    }
-    
-    nonisolated func updateBadge(warningCount: Int) {
-        Task { @MainActor in
-            statusBarController.updateBadge(warningCount: warningCount)
         }
     }
 }

@@ -17,10 +17,10 @@ struct SettingsView: View {
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
         .frame(width: 450, height: 300)
-        .onChange(of: autoCheckUpdates) { _, newValue in
+        .onChange(of: autoCheckUpdates) { newValue in
             updaterController.automaticallyChecksForUpdates = newValue
         }
-        .onChange(of: updateInterval) { _, newValue in
+        .onChange(of: updateInterval) { newValue in
             updaterController.updateCheckInterval = newValue
         }
     }

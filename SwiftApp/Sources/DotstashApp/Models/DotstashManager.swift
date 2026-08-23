@@ -17,9 +17,6 @@ class DotstashManager: ObservableObject {
     let fileWatcher = FileWatcher()
     @Published var lastRefresh = Date()
     
-    // Status bar badge
-    let statusBar = StatusBarController()
-    
     init() {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         self.stashDir = "\(home)/.dotstash"
@@ -37,13 +34,11 @@ class DotstashManager: ObservableObject {
             // Reload config and update watched paths
             self.loadConfig()
             self.restartWatching()
-            self.updateBadge()
             self.lastRefresh = Date()
         }
         
         // Start watching stashed files
         restartWatching()
-        updateBadge()
     }
     
     private func restartWatching() {
@@ -170,7 +165,6 @@ class DotstashManager: ObservableObject {
         dotfiles.sort { $0.name < $1.name }
         saveConfig()
         restartWatching()
-        updateBadge()
         successMessage = "Stashed: \(name)"
     }
     
@@ -252,12 +246,7 @@ class DotstashManager: ObservableObject {
     func refresh() {
         loadConfig()
         restartWatching()
-        updateBadge()
         lastRefresh = Date()
-    }
-    
-    func updateBadge() {
-        statusBar.updateBadge(warningCount: warningCount)
     }
     
     func clearMessages() {
@@ -360,7 +349,6 @@ class DotstashManager: ObservableObject {
         // Reload config
         loadConfig()
         restartWatching()
-        updateBadge()
         
         successMessage = "Imported \(imported) file(s) from archive"
     }
