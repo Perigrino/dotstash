@@ -43,12 +43,8 @@ jobs:
           queries: +security-and-quality
       
       # For Swift - manual build
-      - name: Setup Swift
-        if: matrix.language == 'swift'
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.0'
-      
+      # Uses the Xcode toolchain preinstalled on macOS runners;
+      # swift-actions/setup-swift conflicts with it (modulemap errors)
       - name: Resolve Swift dependencies
         if: matrix.language == 'swift'
         working-directory: SwiftApp
