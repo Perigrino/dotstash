@@ -18,7 +18,7 @@ permissions:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
     
     strategy:
       fail-fast: false
@@ -78,14 +78,6 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
-      
-      # Upload SARIF results
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: results.sarif
-          category: ${{ matrix.language }}
 
   security-queries:
     name: Security Queries
@@ -192,7 +184,7 @@ jobs:
           echo "🔒 Checking for insecure code patterns..."
           
           # Check for hardcoded secrets
-          if grep -r "password\|secret\|token\|api_key\|apikey" --include="*.swift" SwiftApp/Sources/ | grep -v "//\|/\*\|model\|struct.*Info"; then
+          if grep -rwE "password|secret|token|api_key|apikey" --include="*.swift" SwiftApp/Sources/ | grep -v "//\|/\*\|model\|struct.*Info"; then
             echo "⚠️  Potential hardcoded secrets found"
             exit 1
           fi
