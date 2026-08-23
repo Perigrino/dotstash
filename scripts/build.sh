@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 APP_NAME="Dotstash"
-VERSION="2.0.0"
+VERSION="1.0.0"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$PROJECT_DIR/build"
@@ -71,7 +71,7 @@ cat > "$BUNDLE_DIR/Contents/Info.plist" << PLIST
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
-    <string>14.0</string>
+    <string>13.0</string>
     <key>LSUIElement</key>
     <false/>
     <key>NSHumanReadableCopyright</key>

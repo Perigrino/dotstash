@@ -2,7 +2,7 @@
 
 **A native macOS dotfiles manager** — stash, link, and restore your configs with a beautiful SwiftUI app or powerful CLI.
 
-[![macOS](https://img.shields.io/badge/macOS-14%2B-blue)](https://www.apple.com/macos/)
+[![macOS](https://img.shields.io/badge/macOS-13%2B-blue)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange)](https://swift.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Security](https://img.shields.io/badge/Security-Policy-red)](SECURITY.md)
@@ -17,7 +17,7 @@
 ### Option 1: DMG Installer (Recommended)
 
 1. **Download** the latest release:
-   - [Dotstash-2.0.0.dmg](https://github.com/YOUR_USERNAME/dotstash/releases/download/v2.0.0/Dotstash-2.0.0.dmg)
+   - [Dotstash-1.0.0.dmg](https://github.com/YOUR_USERNAME/dotstash/releases/download/v1.0.0/Dotstash-1.0.0.dmg)
 
 2. **Open** the DMG file
 
@@ -264,7 +264,7 @@ When Sparkle keys are not configured:
 
 ### Prerequisites
 
-- macOS 14.0+
+- macOS 13.0+
 - Xcode 15.0+ or Swift 6.0+
 - Node.js 18+ (for CLI)
 
@@ -295,7 +295,7 @@ cp SwiftApp/.build/release/DotstashApp build/Dotstash.app/Contents/MacOS/Dotstas
 # ... (see full build script in project)
 
 # Create DMG
-hdiutil create -volname "Dotstash" -srcfolder build/ -ov -format UDZO build/Dotstash-2.0.0.dmg
+hdiutil create -volname "Dotstash" -srcfolder build/ -ov -format UDZO build/Dotstash-1.0.0.dmg
 ```
 
 ---
@@ -333,7 +333,7 @@ Dotstash/
 │           └── SettingsView.swift
 ├── build/
 │   ├── Dotstash.app/            # Built app bundle
-│   └── Dotstash-2.0.0.dmg      # Installer
+│   └── Dotstash-1.0.0.dmg      # Installer
 └── package.json
 ```
 

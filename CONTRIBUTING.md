@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Dotstash! This document provides 
 
 ### Prerequisites
 
-- macOS 14.0+
+- macOS 13.0+
 - Xcode 15.0+ or Swift 6.0+
 - Node.js 18+ (for CLI)
 - Git

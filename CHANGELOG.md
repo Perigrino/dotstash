@@ -17,6 +17,9 @@ This changelog is automatically updated when new versions are released.
 - **App Bundle**: Fixed Sparkle framework not being bundled with app
   - Build script now copies Sparkle.framework to Contents/Frameworks/
   - Added rpath for framework loading
+- **Menu Bar**: Removed duplicate status bar item
+  - Fixed menu bar icon having no actions
+  - Removed unused StatusBarController
 
 ### 🔧 Improvements
 
@@ -24,6 +27,9 @@ This changelog is automatically updated when new versions are released.
   - App works without Sparkle configuration
   - Clear status indicator in menu bar
   - No error dialogs on launch
+- **macOS Compatibility**: Now supports macOS 13 (Ventura) and later
+  - Changed minimum deployment target from macOS 14 to macOS 13
+  - Updated all documentation and badges
 
 ---
 

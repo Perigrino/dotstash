@@ -92,7 +92,7 @@ npm link
 
 ### Prerequisites
 
-- macOS 14.0+
+- macOS 13.0+
 - Xcode 15.0+ or Swift 6.0+
 - Node.js 18+
 
@@ -148,7 +148,7 @@ dotstash --help
 
 | Requirement | Minimum |
 |-------------|---------|
-| macOS | 14.0 (Sonoma) |
+| macOS | 13.0 (Ventura) |
 | Disk Space | 50 MB |
 | RAM | 100 MB |
 

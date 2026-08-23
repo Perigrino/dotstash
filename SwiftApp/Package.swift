@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "DotstashApp",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v13)
     ],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0")
